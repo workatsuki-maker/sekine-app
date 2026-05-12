@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2代目関根勤選手権</title>
+  <!-- Google Fonts: Noto Sans JP -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 設定値（Gitに含めないconfig.jsから読み込む） -->
+  <script src="config.js"></script>
+  <style>
+    /* ===== CSS変数 ===== */
+    :root {
+      --yellow: #FFE600;
+      --red: #E8000D;
+      --white: #ffffff;
+      --gold: #FFF3CD;
+      --gold-border: #FFCC00;
+      --gray-light: #f5f5f5;
+      --gray: #888;
+      --green: #28a745;
+      --radius: 20px;
+      --shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    /* ===== リセット・ベース ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background-color: var(--yellow);
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+
+    /* ===== ヘッダー ===== */
+    header {
+      background-color: var(--red);
+      color: var(--white);
+      text-align: center;
+      padding: 18px 16px 14px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 {
+      font-size: clamp(1.1rem, 4vw, 1.6rem);
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      text-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+    }
+    header p {
+      font-size: 0.75rem;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+
+    /* ===== メインレイアウト ===== */
+    main {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ===== 写真カード ===== */
+    .photo-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+      max-width: 400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .photo-card img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      display: block;
+    }
+    /* 写真が読み込み中の時のプレースホルダー */
+    .photo-placeholder {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: var(--gray-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: var(--gray);
+    }
+    /* AI生成注記 */
+    .ai-notice {
+      position: absolute;
+      bottom: 8px;
+      right: 10px;
+      background: rgba(0,0,0,0.5);
+      color: var(--white);
+      font-size: 0.6rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      pointer-events: none;
+    }
+
+    /* ===== 投稿フォーム ===== */
+    .post-form {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+    .post-form h2 {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--red);
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .textarea-wrapper {
+      position: relative;
+    }
+    .post-form textarea {
+      width: 100%;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 1rem;
+      resize: none;
+      height: 72px;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .post-form textarea:focus {
+      border-color: var(--red);
+    }
+    .char-counter {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 4px;
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: var(--gray);
+    }
+    .char-counter span {
+      font-weight: 700;
+      color: #333;
+    }
+    .char-counter span.over { color: var(--red); }
+    #submit-btn {
+      width: 100%;
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--red);
+      color: var(--white);
+      border: none;
+      border-radius: 12px;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 1rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      letter-spacing: 0.05em;
+    }
+    #submit-btn:hover { opacity: 0.85; }
+    #submit-btn:active { transform: scale(0.97); }
+    #submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ===== ナビゲーションボタン ===== */
+    .nav-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    .nav-btn {
+      flex: 1;
+      padding: 12px 8px;
+      background: var(--white);
+      color: #333;
+      border: 3px solid #333;
+      border-radius: 14px;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, transform 0.1s;
+      text-align: center;
+    }
+    .nav-btn:hover { background: #333; color: var(--white); }
+    .nav-btn:active { transform: scale(0.97); }
+    .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .nav-btn:disabled:hover { background: var(--white); color: #333; }
+
+    /* ===== ランキング ===== */
+    .ranking {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+    .ranking h2 {
+      font-size: 1.1rem;
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 16px;
+      color: #333;
+    }
+    .ranking-empty {
+      text-align: center;
+      color: var(--gray);
+      font-size: 0.9rem;
+      padding: 20px 0;
+      line-height: 1.6;
+    }
+
+    /* ランキングカード */
+    .rank-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      background: var(--gray-light);
+      transition: transform 0.1s;
+    }
+    /* 1位は金色 */
+    .rank-card.rank-1 {
+      background: var(--gold);
+      border: 2px solid var(--gold-border);
+    }
+    .rank-badge {
+      font-size: 1.2rem;
+      font-weight: 900;
+      min-width: 36px;
+      text-align: center;
+      color: var(--gray);
+      flex-shrink: 0;
+    }
+    .rank-card.rank-1 .rank-badge { color: #b8860b; }
+    .rank-content {
+      flex: 1;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #222;
+      line-height: 1.4;
+      word-break: break-all;
+    }
+
+    /* いいねボタン */
+    .like-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .like-btn:hover { background: rgba(232,0,13,0.08); }
+    .like-btn .heart {
+      font-size: 1.4rem;
+      display: inline-block;
+      line-height: 1;
+    }
+    .like-btn .like-count {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #555;
+    }
+    /* いいね済みの時 */
+    .like-btn.liked .heart { filter: none; }
+    .like-btn.liked .like-count { color: var(--red); }
+
+    /* ハートのポップアニメーション */
+    @keyframes heartPop {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.5); }
+      70%  { transform: scale(0.9); }
+      100% { transform: scale(1); }
+    }
+    .heart.pop { animation: heartPop 0.35s ease-out; }
+
+    /* ===== ローディングスピナー ===== */
+    #loading-spinner {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255,230,0,0.6);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    #loading-spinner.active { display: flex; }
+    .spinner {
+      width: 52px;
+      height: 52px;
+      border: 6px solid rgba(255,255,255,0.5);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== トースト通知 ===== */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      pointer-events: none;
+    }
+    .toast {
+      padding: 12px 24px;
+      border-radius: 100px;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--white);
+      white-space: nowrap;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .toast.success { background: var(--green); }
+    .toast.error   { background: var(--red); }
+    .toast.fade-out { opacity: 0; }
+
+    /* ===== レスポンシブ（480px以下） ===== */
+    @media (max-width: 480px) {
+      header h1 { font-size: 1rem; }
+      main { padding: 14px 10px; gap: 12px; }
+      .post-form, .ranking { padding: 16px; }
+      .rank-content { font-size: 0.88rem; }
+      .nav-btn { font-size: 0.85rem; padding: 10px 6px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ヘッダー -->
+  <header>
+    <h1>2代目関根勤選手権</h1>
+    <p>この人に「ピッタリの一言」を投稿しよう！</p>
+  </header>
+
+  <!-- ローディングスピナー -->
+  <div id="loading-spinner">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- トースト通知コンテナ -->
+  <div id="toast-container"></div>
+
+  <!-- メインコンテンツ -->
+  <main>
+    <!-- 写真カード -->
+    <div class="photo-card" id="photo-card">
+      <div class="photo-placeholder" id="photo-placeholder">📷</div>
+      <img id="current-photo" src="" alt="人物写真" style="display:none;">
+      <span class="ai-notice">※この画像はAI生成です</span>
+    </div>
+
+    <!-- 投稿フォーム -->
+    <div class="post-form">
+      <h2>この人に一言！</h2>
+      <div class="textarea-wrapper">
+        <textarea
+          id="content"
+          maxlength="50"
+          placeholder="例：「あ、この人、駅で見たことある！」"
+          rows="3"
+        ></textarea>
+      </div>
+      <div class="char-counter">
+        残り <span id="char-count">50</span> 文字
+      </div>
+      <button id="submit-btn">投稿する</button>
+    </div>
+
+    <!-- ナビゲーションボタン -->
+    <div class="nav-buttons">
+      <button class="nav-btn" id="prev-btn" disabled>← 前の人</button>
+      <button class="nav-btn" id="next-btn">次の人 →</button>
+    </div>
+
+    <!-- ランキング -->
+    <div class="ranking">
+      <h2>みんなの一言ランキング</h2>
+      <div id="ranking-list">
+        <p class="ranking-empty">写真を読み込み中...</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ===== Supabase 設定値（config.js から読み込む） =====
+    const SUPABASE_URL = window.SUPABASE_URL;
+    const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+
+    // ===== Supabase クライアント初期化 =====
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ===== アプリの状態管理 =====
+    let currentPhoto = null;       // 現在表示中の写真オブジェクト
+    let photoHistory = [];         // 閲覧した写真IDの履歴配列
+    let historyIndex = -1;         // 現在の履歴インデックス
+    let seenIds = new Set();       // 閲覧済みIDのセット（重複防止）
+    let allPhotos = [];            // photosテーブルの全データキャッシュ
+    let likedPosts = new Set();    // いいね済みのpost_idセット
+
+    // ===== セッションID管理 =====
+    // localStorageで一意のセッションIDを生成・保存し、二重いいねを防止する
+    function getSessionId() {
+      let id = localStorage.getItem('session_id');
+      if (!id) {
+        id = crypto.randomUUID();
+        localStorage.setItem('session_id', id);
+      }
+      return id;
+    }
+
+    // ===== いいね済み投稿の永続化 =====
+    function loadLikedPosts() {
+      try {
+        const saved = localStorage.getItem('liked_posts');
+        if (saved) {
+          likedPosts = new Set(JSON.parse(saved));
+        }
+      } catch {
+        likedPosts = new Set();
+      }
+    }
+
+    function saveLikedPosts() {
+      localStorage.setItem('liked_posts', JSON.stringify([...likedPosts]));
+    }
+
+    // ===== ローディングスピナー =====
+    function showSpinner() {
+      document.getElementById('loading-spinner').classList.add('active');
+    }
+
+    function hideSpinner() {
+      document.getElementById('loading-spinner').classList.remove('active');
+    }
+
+    // ===== トースト通知（3秒で自動消滅） =====
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      // 2.5秒後にフェードアウト開始
+      setTimeout(() => {
+        toast.classList.add('fade-out');
+        // 0.5秒のフェード後にDOMから削除
+        setTimeout(() => toast.remove(), 500);
+      }, 2500);
+    }
+
+    // ===== 写真の全件取得（キャッシュ） =====
+    async function fetchAllPhotos() {
+      const { data, error } = await db.from('photos').select('*').order('id');
+      if (error) throw error;
+      return data || [];
+    }
+
+    // ===== 写真の読み込みと表示 =====
+    // photoId が null の場合はランダム選択、指定がある場合はそのIDを使う
+    async function loadPhoto(photoId = null) {
+      showSpinner();
+      try {
+        // 初回または全件データが空の場合はフェッチ
+        if (allPhotos.length === 0) {
+          allPhotos = await fetchAllPhotos();
+        }
+        if (allPhotos.length === 0) {
+          showToast('写真が登録されていません', 'error');
+          hideSpinner();
+          return;
+        }
+
+        let photo;
+        if (photoId !== null) {
+          // 指定IDの写真を使う（前の人ボタン用）
+          photo = allPhotos.find(p => p.id === photoId);
+          if (!photo) {
+            showToast('写真が見つかりませんでした', 'error');
+            hideSpinner();
+            return;
+          }
+        } else {
+          // 閲覧済みを除いたプールからランダム選択
+          const unseen = allPhotos.filter(p => !seenIds.has(p.id));
+          const pool = unseen.length > 0 ? unseen : allPhotos; // 全部見たらリセット
+          if (unseen.length === 0) {
+            seenIds.clear(); // 全部見たのでリセット
+          }
+          photo = pool[Math.floor(Math.random() * pool.length)];
+        }
+
+        // Supabase Storage のパブリックURLを構築
+        // storage_path が "persons/001.jpg" 形式のため、直接URLを組み立てる
+        const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${photo.storage_path}`;
+        const urlData = { publicUrl };
+
+        currentPhoto = photo;
+        seenIds.add(photo.id);
+
+        // 写真画像をDOMに反映
+        const img = document.getElementById('current-photo');
+        const placeholder = document.getElementById('photo-placeholder');
+
+        // 画像読み込み開始
+        img.style.display = 'none';
+        placeholder.style.display = 'flex';
+        img.onload = () => {
+          placeholder.style.display = 'none';
+          img.style.display = 'block';
+        };
+        img.onerror = () => {
+          placeholder.textContent = '🖼️';
+          placeholder.style.display = 'flex';
+          img.style.display = 'none';
+        };
+        img.src = urlData.publicUrl;
+
+        // ランキングを再読み込み
+        await loadRanking();
+      } catch (err) {
+        console.error('写真の読み込みエラー:', err);
+        showToast('写真の読み込みに失敗しました', 'error');
+      } finally {
+        hideSpinner();
+      }
+    }
+
+    // ===== ランキングの読み込みと描画 =====
+    async function loadRanking() {
+      const rankingList = document.getElementById('ranking-list');
+      if (!currentPhoto) {
+        rankingList.innerHTML = '<p class="ranking-empty">写真を選択してください</p>';
+        return;
+      }
+
+      try {
+        // 現在の写真への投稿をいいね数降順・投稿日時降順で取得
+        const { data: posts, error } = await db
+          .from('posts')
+          .select('*')
+          .eq('photo_id', currentPhoto.id)
+          .order('likes_count', { ascending: false })
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (!posts || posts.length === 0) {
+          rankingList.innerHTML = '<p class="ranking-empty">まだ投稿がありません。最初の一言を入れてみよう！</p>';
+          return;
+        }
+
+        // ランキングカードをHTMLで生成
+        rankingList.innerHTML = posts.map((post, index) => {
+          const rank = index + 1;
+          const isFirst = rank === 1;
+          const isLiked = likedPosts.has(post.id);
+
+          const rankBadge = isFirst
+            ? '<span class="rank-badge">👑</span>'
+            : `<span class="rank-badge">${rank}位</span>`;
+
+          const heartIcon = isLiked ? '♥' : '♡';
+          const likedClass = isLiked ? 'liked' : '';
+
+          return `
+            <div class="rank-card ${isFirst ? 'rank-1' : ''}" data-post-id="${post.id}">
+              ${rankBadge}
+              <div class="rank-content">${escapeHtml(post.content)}</div>
+              <button
+                class="like-btn ${likedClass}"
+                data-post-id="${post.id}"
+                data-liked="${isLiked}"
+                onclick="toggleLike(${post.id}, ${post.likes_count}, this)"
+                aria-label="いいね"
+              >
+                <span class="heart">${heartIcon}</span>
+                <span class="like-count">${post.likes_count}</span>
+              </button>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('ランキング読み込みエラー:', err);
+        rankingList.innerHTML = '<p class="ranking-empty">ランキングの読み込みに失敗しました</p>';
+      }
+    }
+
+    // ===== XSSを防ぐHTMLエスケープ =====
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.appendChild(document.createTextNode(text));
+      return div.innerHTML;
+    }
+
+    // ===== 投稿送信 =====
+    async function submitPost() {
+      const textarea = document.getElementById('content');
+      const content = textarea.value.trim();
+
+      // バリデーション
+      if (!content) {
+        showToast('一言を入力してください', 'error');
+        return;
+      }
+      if (content.length > 50) {
+        showToast('50文字以内で入力してください', 'error');
+        return;
+      }
+      if (!currentPhoto) {
+        showToast('写真が読み込まれていません', 'error');
+        return;
+      }
+
+      const submitBtn = document.getElementById('submit-btn');
+      submitBtn.disabled = true;
+
+      try {
+        // postsテーブルに新規投稿
+        const { error } = await db.from('posts').insert({
+          photo_id: currentPhoto.id,
+          content: content,
+          likes_count: 0,
+        });
+
+        if (error) throw error;
+
+        // 成功後の処理
+        textarea.value = '';
+        updateCharCount();
+        showToast('投稿しました！');
+        await loadRanking();
+      } catch (err) {
+        console.error('投稿エラー:', err);
+        showToast('投稿に失敗しました', 'error');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    // ===== いいねのトグル =====
+    // btn: クリックされたボタン要素（DOM操作に使用）
+    async function toggleLike(postId, currentCount, btn) {
+      const sessionId = getSessionId();
+      const isLiked = likedPosts.has(postId);
+      const heartEl = btn.querySelector('.heart');
+      const countEl = btn.querySelector('.like-count');
+
+      // ダブルクリック防止
+      btn.disabled = true;
+
+      // ハートアニメーション（既存クラスを除去して再付与）
+      heartEl.classList.remove('pop');
+      void heartEl.offsetWidth; // リフローを強制してアニメーションをリセット
+      heartEl.classList.add('pop');
+
+      try {
+        if (!isLiked) {
+          // いいね追加：likesテーブルにINSERT
+          const { error: likeError } = await db.from('likes').insert({
+            post_id: postId,
+            session_id: sessionId,
+          });
+
+          // unique制約違反（二重いいね）はサイレントに処理
+          if (likeError && likeError.code !== '23505') throw likeError;
+
+          if (!likeError) {
+            // likes_countを+1
+            await db.from('posts').update({ likes_count: currentCount + 1 }).eq('id', postId);
+            likedPosts.add(postId);
+            saveLikedPosts();
+
+            // UIを即時更新
+            btn.classList.add('liked');
+            btn.dataset.liked = 'true';
+            heartEl.textContent = '♥';
+            countEl.textContent = currentCount + 1;
+          }
+        } else {
+          // いいね取消：likesテーブルからDELETE
+          const { error: deleteError } = await db.from('likes')
+            .delete()
+            .eq('post_id', postId)
+            .eq('session_id', sessionId);
+
+          if (deleteError) throw deleteError;
+
+          // likes_countを-1（最低0）
+          const newCount = Math.max(0, currentCount - 1);
+          await db.from('posts').update({ likes_count: newCount }).eq('id', postId);
+          likedPosts.delete(postId);
+          saveLikedPosts();
+
+          // UIを即時更新
+          btn.classList.remove('liked');
+          btn.dataset.liked = 'false';
+          heartEl.textContent = '♡';
+          countEl.textContent = newCount;
+        }
+
+        // いいね変更後にランキングを再読み込み（順位の再ソート）
+        await loadRanking();
+      } catch (err) {
+        console.error('いいねエラー:', err);
+        showToast('いいねの処理に失敗しました', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // ===== 次の人へ =====
+    async function nextPhoto() {
+      // 履歴の途中にいる場合は履歴を進める
+      if (historyIndex < photoHistory.length - 1) {
+        historyIndex++;
+        const nextId = photoHistory[historyIndex];
+        await loadPhoto(nextId);
+      } else {
+        // 新しいランダム写真を取得
+        await loadPhoto(null);
+        if (currentPhoto) {
+          // 現在位置以降の履歴を切り捨てて新しいIDを追加
+          photoHistory = photoHistory.slice(0, historyIndex + 1);
+          photoHistory.push(currentPhoto.id);
+          historyIndex = photoHistory.length - 1;
+        }
+      }
+      updateNavButtons();
+    }
+
+    // ===== 前の人へ =====
+    async function prevPhoto() {
+      if (historyIndex <= 0) return;
+      historyIndex--;
+      const prevId = photoHistory[historyIndex];
+      await loadPhoto(prevId);
+      updateNavButtons();
+    }
+
+    // ===== ナビゲーションボタンの有効/無効切り替え =====
+    function updateNavButtons() {
+      const prevBtn = document.getElementById('prev-btn');
+      prevBtn.disabled = historyIndex <= 0;
+    }
+
+    // ===== 文字数カウンターの更新 =====
+    function updateCharCount() {
+      const textarea = document.getElementById('content');
+      const countEl = document.getElementById('char-count');
+      const remaining = 50 - textarea.value.length;
+      countEl.textContent = remaining;
+      // 残り5文字以下は赤字で警告
+      if (remaining <= 5) {
+        countEl.classList.add('over');
+      } else {
+        countEl.classList.remove('over');
+      }
+    }
+
+    // ===== 初期化 =====
+    async function init() {
+      loadLikedPosts();
+
+      // 最初の写真をランダムに読み込む
+      await loadPhoto(null);
+
+      if (currentPhoto) {
+        photoHistory.push(currentPhoto.id);
+        historyIndex = 0;
+        updateNavButtons();
+      }
+    }
+
+    // ===== イベントリスナー =====
+    document.addEventListener('DOMContentLoaded', () => {
+      // 文字数カウンター
+      document.getElementById('content').addEventListener('input', updateCharCount);
+
+      // 投稿ボタン
+      document.getElementById('submit-btn').addEventListener('click', submitPost);
+
+      // 次の人ボタン
+      document.getElementById('next-btn').addEventListener('click', nextPhoto);
+
+      // 前の人ボタン
+      document.getElementById('prev-btn').addEventListener('click', prevPhoto);
+
+      // Enter（Shift+Enterで改行、Enterのみで投稿）
+      document.getElementById('content').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          submitPost();
+        }
+      });
+
+      // アプリ起動
+      init();
+    });
+  </script>
+</body>
+</html>
