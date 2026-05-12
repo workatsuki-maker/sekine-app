@@ -15,48 +15,56 @@
   <style>
     /* ===== CSS変数 ===== */
     :root {
-      --yellow: #FFE600;
-      --red: #E8000D;
+      --primary: #6366F1;
+      --primary-dark: #4F46E5;
+      --gradient: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+      --bg: #F1F5F9;
       --white: #ffffff;
-      --gold: #FFF3CD;
-      --gold-border: #FFCC00;
-      --gray-light: #f5f5f5;
-      --gray: #888;
-      --green: #28a745;
-      --radius: 20px;
-      --shadow: 0 4px 16px rgba(0,0,0,0.15);
+      --card-border: #E2E8F0;
+      --gold: #FEF9C3;
+      --gold-border: #FCD34D;
+      --gold-text: #92400E;
+      --gray-light: #F8FAFC;
+      --text-main: #1E293B;
+      --text-sub: #64748B;
+      --like-color: #EF4444;
+      --success: #10B981;
+      --radius: 16px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow: 0 4px 24px rgba(99,102,241,0.08), 0 1px 4px rgba(0,0,0,0.06);
     }
 
     /* ===== リセット・ベース ===== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Noto Sans JP', sans-serif;
-      background-color: var(--yellow);
+      background-color: var(--bg);
       min-height: 100vh;
-      padding-bottom: 40px;
+      padding-bottom: 48px;
+      color: var(--text-main);
     }
 
     /* ===== ヘッダー ===== */
     header {
-      background-color: var(--red);
+      background: var(--gradient);
       color: var(--white);
       text-align: center;
-      padding: 18px 16px 14px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      padding: 20px 16px 16px;
+      box-shadow: 0 2px 16px rgba(99,102,241,0.3);
       position: sticky;
       top: 0;
       z-index: 100;
     }
     header h1 {
-      font-size: clamp(1.1rem, 4vw, 1.6rem);
+      font-size: clamp(1.3rem, 5vw, 2rem);
       font-weight: 900;
-      letter-spacing: 0.05em;
-      text-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+      letter-spacing: 0.03em;
     }
     header p {
-      font-size: 0.75rem;
-      opacity: 0.85;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.8);
       margin-top: 4px;
+      font-weight: 400;
     }
 
     /* ===== メインレイアウト ===== */
@@ -66,20 +74,23 @@
       padding: 20px 16px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
     /* ===== 写真カード ===== */
     .photo-card {
       background: var(--white);
       border-radius: var(--radius);
+      border: 1px solid var(--card-border);
       box-shadow: var(--shadow);
       overflow: hidden;
       position: relative;
-      max-width: 400px;
+      max-width: 420px;
       width: 100%;
       margin: 0 auto;
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
+    .photo-card:hover { transform: translateY(-2px); }
     .photo-card img {
       width: 100%;
       aspect-ratio: 1 / 1;
@@ -90,57 +101,79 @@
     .photo-placeholder {
       width: 100%;
       aspect-ratio: 1 / 1;
-      background: var(--gray-light);
+      background: linear-gradient(135deg, #EEF2FF, #F5F3FF);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 3rem;
-      color: var(--gray);
+      color: var(--primary);
+      opacity: 0.5;
+    }
+    /* 画像下部グラデーションオーバーレイ */
+    .photo-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      background: linear-gradient(to top, rgba(0,0,0,0.35), transparent);
+      pointer-events: none;
     }
     /* AI生成注記 */
     .ai-notice {
       position: absolute;
-      bottom: 8px;
-      right: 10px;
-      background: rgba(0,0,0,0.5);
-      color: var(--white);
-      font-size: 0.6rem;
-      padding: 2px 6px;
-      border-radius: 4px;
+      bottom: 10px;
+      right: 12px;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(4px);
+      color: rgba(255,255,255,0.9);
+      font-size: 0.65rem;
+      padding: 3px 8px;
+      border-radius: 100px;
       pointer-events: none;
+      z-index: 1;
+      border: 1px solid rgba(255,255,255,0.2);
     }
 
     /* ===== 投稿フォーム ===== */
     .post-form {
       background: var(--white);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      border: 1px solid var(--card-border);
+      box-shadow: var(--shadow-sm);
       padding: 20px;
     }
     .post-form h2 {
-      font-size: 1.1rem;
-      font-weight: 900;
-      color: var(--red);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary);
       margin-bottom: 12px;
       text-align: center;
+      letter-spacing: 0.02em;
     }
     .textarea-wrapper {
       position: relative;
     }
     .post-form textarea {
       width: 100%;
-      border: 2px solid #ddd;
-      border-radius: 12px;
+      border: 1.5px solid var(--card-border);
+      border-radius: 10px;
       padding: 10px 12px;
       font-family: 'Noto Sans JP', sans-serif;
-      font-size: 1rem;
+      font-size: 0.95rem;
       resize: none;
       height: 72px;
-      transition: border-color 0.2s;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       outline: none;
+      color: var(--text-main);
+      background: var(--gray-light);
     }
+    .post-form textarea::placeholder { color: #94A3B8; }
     .post-form textarea:focus {
-      border-color: var(--red);
+      border-color: var(--primary);
+      background: var(--white);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
     }
     .char-counter {
       display: flex;
@@ -148,78 +181,88 @@
       align-items: center;
       gap: 4px;
       margin-top: 6px;
-      font-size: 0.8rem;
-      color: var(--gray);
+      font-size: 0.75rem;
+      color: var(--text-sub);
     }
     .char-counter span {
       font-weight: 700;
-      color: #333;
+      color: var(--text-main);
     }
-    .char-counter span.over { color: var(--red); }
+    .char-counter span.over { color: var(--like-color); }
     #submit-btn {
       width: 100%;
       margin-top: 12px;
       padding: 12px;
-      background: var(--red);
+      background: var(--gradient);
       color: var(--white);
       border: none;
-      border-radius: 12px;
-      font-family: 'Noto Sans JP', sans-serif;
-      font-size: 1rem;
-      font-weight: 900;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
-      letter-spacing: 0.05em;
-    }
-    #submit-btn:hover { opacity: 0.85; }
-    #submit-btn:active { transform: scale(0.97); }
-    #submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    /* ===== ナビゲーションボタン ===== */
-    .nav-buttons {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-    }
-    .nav-btn {
-      flex: 1;
-      padding: 12px 8px;
-      background: var(--white);
-      color: #333;
-      border: 3px solid #333;
-      border-radius: 14px;
+      border-radius: 10px;
       font-family: 'Noto Sans JP', sans-serif;
       font-size: 0.95rem;
       font-weight: 700;
       cursor: pointer;
-      transition: background 0.2s, color 0.2s, transform 0.1s;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      letter-spacing: 0.04em;
+      box-shadow: 0 2px 8px rgba(99,102,241,0.3);
+    }
+    #submit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(99,102,241,0.4);
+    }
+    #submit-btn:active { transform: scale(0.98); }
+    #submit-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* ===== ナビゲーションボタン ===== */
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    .nav-btn {
+      flex: 1;
+      padding: 11px 8px;
+      background: var(--white);
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+      border-radius: 100px;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       text-align: center;
     }
-    .nav-btn:hover { background: #333; color: var(--white); }
+    .nav-btn:hover {
+      background: var(--primary);
+      color: var(--white);
+      box-shadow: 0 2px 8px rgba(99,102,241,0.25);
+    }
     .nav-btn:active { transform: scale(0.97); }
     .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-    .nav-btn:disabled:hover { background: var(--white); color: #333; }
+    .nav-btn:disabled:hover { background: var(--white); color: var(--primary); box-shadow: none; }
 
     /* ===== ランキング ===== */
     .ranking {
       background: var(--white);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      border: 1px solid var(--card-border);
+      box-shadow: var(--shadow-sm);
       padding: 20px;
     }
     .ranking h2 {
-      font-size: 1.1rem;
-      font-weight: 900;
+      font-size: 1rem;
+      font-weight: 700;
       text-align: center;
       margin-bottom: 16px;
-      color: #333;
+      color: var(--text-main);
+      letter-spacing: 0.02em;
     }
     .ranking-empty {
       text-align: center;
-      color: var(--gray);
-      font-size: 0.9rem;
-      padding: 20px 0;
-      line-height: 1.6;
+      color: var(--text-sub);
+      font-size: 0.88rem;
+      padding: 24px 0;
+      line-height: 1.7;
     }
 
     /* ランキングカード */
@@ -229,32 +272,49 @@
       gap: 12px;
       padding: 12px 14px;
       border-radius: 12px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       background: var(--gray-light);
-      transition: transform 0.1s;
+      border: 1px solid transparent;
+      border-left: 3px solid var(--primary);
+      transition: all 0.15s ease;
     }
+    .rank-card:hover { background: #EEF2FF; }
     /* 1位は金色 */
     .rank-card.rank-1 {
       background: var(--gold);
-      border: 2px solid var(--gold-border);
+      border-left-color: var(--gold-border);
+      border-color: var(--gold-border);
     }
+    .rank-card.rank-1:hover { background: #FEF08A22; }
+    /* 順位バッジ：丸型 */
     .rank-badge {
-      font-size: 1.2rem;
-      font-weight: 900;
-      min-width: 36px;
-      text-align: center;
-      color: var(--gray);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: var(--white);
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
     }
-    .rank-card.rank-1 .rank-badge { color: #b8860b; }
+    .rank-card.rank-1 .rank-badge {
+      background: linear-gradient(135deg, #F59E0B, #D97706);
+      font-size: 1rem;
+      width: 30px;
+      height: 30px;
+    }
     .rank-content {
       flex: 1;
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: #222;
+      font-size: 0.93rem;
+      font-weight: 500;
+      color: var(--text-main);
       line-height: 1.4;
       word-break: break-all;
     }
+    .rank-card.rank-1 .rank-content { font-weight: 700; color: var(--gold-text); }
 
     /* いいねボタン */
     .like-btn {
@@ -265,25 +325,27 @@
       background: none;
       border: none;
       cursor: pointer;
-      padding: 4px 8px;
+      padding: 6px 8px;
       border-radius: 8px;
-      transition: background 0.2s;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       flex-shrink: 0;
     }
-    .like-btn:hover { background: rgba(232,0,13,0.08); }
+    .like-btn:hover { background: rgba(239,68,68,0.08); }
     .like-btn .heart {
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       display: inline-block;
       line-height: 1;
+      color: #CBD5E1;
+      transition: color 0.2s;
     }
+    .like-btn.liked .heart { color: var(--like-color); }
     .like-btn .like-count {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 700;
-      color: #555;
+      color: var(--text-sub);
+      transition: color 0.2s;
     }
-    /* いいね済みの時 */
-    .like-btn.liked .heart { filter: none; }
-    .like-btn.liked .like-count { color: var(--red); }
+    .like-btn.liked .like-count { color: var(--like-color); }
 
     /* ハートのポップアニメーション */
     @keyframes heartPop {
@@ -299,58 +361,59 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(255,230,0,0.6);
+      background: rgba(241,245,249,0.8);
+      backdrop-filter: blur(2px);
       z-index: 200;
       align-items: center;
       justify-content: center;
     }
     #loading-spinner.active { display: flex; }
     .spinner {
-      width: 52px;
-      height: 52px;
-      border: 6px solid rgba(255,255,255,0.5);
-      border-top-color: var(--red);
+      width: 44px;
+      height: 44px;
+      border: 4px solid rgba(99,102,241,0.15);
+      border-top-color: var(--primary);
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      animation: spin 0.7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ===== トースト通知 ===== */
     #toast-container {
       position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
+      top: 80px;
+      right: 16px;
       z-index: 300;
       display: flex;
       flex-direction: column;
       gap: 8px;
-      align-items: center;
+      align-items: flex-end;
       pointer-events: none;
     }
     .toast {
-      padding: 12px 24px;
-      border-radius: 100px;
+      padding: 10px 20px;
+      border-radius: 12px;
       font-family: 'Noto Sans JP', sans-serif;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 700;
       color: var(--white);
       white-space: nowrap;
       opacity: 1;
-      transition: opacity 0.5s ease;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transition: opacity 0.4s ease;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
     }
-    .toast.success { background: var(--green); }
-    .toast.error   { background: var(--red); }
+    .toast.success { background: var(--success); }
+    .toast.error   { background: var(--like-color); }
     .toast.fade-out { opacity: 0; }
 
-    /* ===== レスポンシブ（480px以下） ===== */
+    /* ===== レスポンシブ ===== */
     @media (max-width: 480px) {
-      header h1 { font-size: 1rem; }
-      main { padding: 14px 10px; gap: 12px; }
+      header h1 { font-size: 1.2rem; }
+      main { padding: 14px 12px; gap: 12px; }
       .post-form, .ranking { padding: 16px; }
       .rank-content { font-size: 0.88rem; }
       .nav-btn { font-size: 0.85rem; padding: 10px 6px; }
+      #toast-container { right: 12px; top: 72px; }
     }
   </style>
 </head>
